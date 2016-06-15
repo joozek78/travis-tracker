@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Travis tracker</title>
+</head>
+<body>
+<script>
+    var organizations = ['PuppetJs', 'StarcounterSamples'];
+    var travisBadgeTemplate = 'https://travis-ci.org/PuppetJs/puppet-polymer-client.svg?branch=gh-pages';
+    var githubHeaders = new Headers({
+        accept:'application/json',
+        'content-type': 'application/json'
+    });
+    function createBadgesForOrg(orgName) {
+        return fetch(`https://api.github.com/orgs/${orgName}/repos`, {
+            method: 'GET',
+            mode: 'CORS',
+            headers: githubHeaders
+        })
+        .then(response => response.json())
+        .then((reposJson) =>
+            reposJson.map( repo => {
+                var img = document.createElement("img");
+                img.src = `https://travis-ci.org/${orgName}/${repo.name}.svg?branch=gh-pages`;
+                return [repo.name, img];
+            })
+        );
+    }
+
+    function appendTableForOrg(orgName) {
+        var div = document.createElement("div");
+        var header = document.createElement("h2");
+        header.innerText = orgName;
+        var table = document.createElement("table");
+        div.appendChild(header);
+        div.appendChild(table);
+        document.body.appendChild(div);
+
+        return createBadgesForOrg(orgName).then(badges => badges.map(l => {
+            var [repoName, badge] = l
+            var tr = table.insertRow();
+            var link = document.createElement("a");
+            link.href = `https://github.com/${orgName}/${repoName}`;
+            link.innerText = repoName;
+            tr.insertCell().appendChild(link);
+            tr.insertCell().appendChild(badge);
+        }));
+    }
+
+    Promise.all(organizations.map(appendTableForOrg)).then(_=> document.title = 'OK', _ => document.title = 'ERROR');
+</script>
+
+</body>
+</html>
